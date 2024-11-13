@@ -9,18 +9,38 @@
   <style>
     /* Fondo general y estilo */
     body {
-      background: radial-gradient(circle, #333, #111);
+      background: radial-gradient(circle, rgba(51, 51, 51, 0.8), rgba(17, 17, 17, 0.9)), url('background-pattern.png');
       color: #fff;
       font-family: 'Montserrat', sans-serif;
       text-align: center;
       margin: 0;
       padding: 0;
-      overflow-x: hidden; /* Para evitar desplazamiento horizontal */
+      overflow-x: hidden;
+    }
+
+    /* Header fijo */
+    header {
+      background-color: #222;
+      color: #f0a500;
+      padding: 10px;
+      font-size: 1.5em;
+      font-weight: bold;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.5);
+      z-index: 100;
     }
 
     h2 {
       font-size: 2em;
-      margin: 1em 0;
+      margin: 1em 0 0.5em;
+      color: #f0a500;
+      text-shadow: 0px 0px 5px rgba(255, 215, 0, 0.7);
+    }
+
+    #game-container {
+      margin-top: 80px; /* Espacio para el header */
     }
 
     #game {
@@ -30,21 +50,36 @@
       height: 60vh;
       max-height: 400px;
       position: relative;
-      border-radius: 10px;
+      border-radius: 15px;
       box-shadow: 0px 0px 20px rgba(255, 215, 0, 0.7);
       background-color: #222;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
+      transition: box-shadow 0.3s;
+    }
+
+    /* Resplandor en el slot cuando hay un premio */
+    #game.win {
+      box-shadow: 0px 0px 30px 10px rgba(255, 215, 0, 1);
+      animation: glow 1s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0px 0px 30px 10px rgba(255, 215, 0, 1); }
+      to { box-shadow: 0px 0px 20px 5px rgba(255, 215, 0, 0.7); }
     }
 
     #countdown {
       font-size: 1.2em;
       margin-top: 10px;
       font-weight: bold;
+      color: #f0a500;
+      text-shadow: 0px 0px 5px rgba(255, 215, 0, 0.8);
     }
 
-    /* Botón de Giro */
+    /* Botón de Giro con animación */
     #spin_button {
       width: 50vw;
       max-width: 180px;
@@ -54,22 +89,23 @@
       color: #222;
       font-size: 1.2em;
       font-weight: bold;
-      border-radius: 5px;
+      border-radius: 10px;
       margin-top: 20px;
       cursor: pointer;
       box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
-      transition: transform 0.1s ease;
+      transition: all 0.2s ease;
     }
 
     #spin_button:hover {
-      transform: scale(1.05);
+      transform: scale(1.1);
+      box-shadow: 0px 8px 15px rgba(255, 165, 0, 0.8);
     }
 
     #spin_button:active {
       transform: scale(0.95);
     }
 
-    /* Popup para anuncios de premio */
+    /* Popup de premio con oscurecimiento de fondo */
     .popup {
       display: none;
       position: fixed;
@@ -77,7 +113,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.9);
       color: #fff;
       font-size: 1.2em;
       justify-content: center;
@@ -103,10 +139,13 @@
   </style>
 </head>
 <body>
-  <h2>Máquina de Slots de Alcohol</h2>
-  <div id="game"></div>
-  <p id="countdown">Próximo giro automático en: 20:00</p>
-  <button id="spin_button">GIRAR</button>
+  <header>GAUDÍ SLOTS</header>
+  <div id="game-container">
+    <h2>¡Prueba tu suerte!</h2>
+    <div id="game"></div>
+    <p id="countdown">Próximo giro automático en: 20:00</p>
+    <button id="spin_button">GIRAR</button>
+  </div>
 
   <div class="popup" id="popup">
     <div class="popup-content" id="popup-content">
@@ -115,24 +154,19 @@
   </div>
 
   <script>
-    emailjs.init("js5XmG0FCVqaqyfy_"); // Inicializar EmailJS
+    emailjs.init("js5XmG0FCVqaqyfy_");
 
-    // Configuración inicial de Phaser ajustada para la pantalla
     const config = {
       type: Phaser.AUTO,
       width: '100%',
       height: '100%',
       scale: {
-        mode: Phaser.Scale.FIT, // Escalar para ajustarse a la pantalla
+        mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
       },
       parent: 'game',
       backgroundColor: '#111',
-      scene: {
-        preload: preload,
-        create: create,
-        update: update
-      }
+      scene: { preload, create, update }
     };
 
     const game = new Phaser.Game(config);
@@ -144,7 +178,7 @@
     let countdownText = document.getElementById('countdown');
     const popup = document.getElementById('popup');
     const popupContent = document.getElementById('popup-content');
-    const slotHeight = 200; // Aumentado para hacer las imágenes más grandes
+    const slotHeight = 200;
 
     function preload() {
       this.load.image('ron_barcelo', 'images/ron.png');
@@ -159,7 +193,7 @@
       for (let i = 0; i < 3; i++) {
         const randomSymbol = Phaser.Math.RND.pick(symbols);
         const slot = this.add.image(slotXStart + i * slotSpacing, this.scale.height / 2, randomSymbol);
-        slot.displayHeight = slotHeight; // Aplicar altura mayor para las imágenes
+        slot.displayHeight = slotHeight;
         slot.scaleX = slot.scaleY;
         slots.push(slot);
       }
@@ -180,6 +214,7 @@
       if (spinning) return;
       spinning = true;
       countdownTime = 1200;
+      document.getElementById('game').classList.remove('win'); // Quitar resplandor
 
       slots.forEach((slot, index) => {
         this.tweens.add({
@@ -201,7 +236,7 @@
             slot.scaleX = slot.scaleY;
             slot.y -= 400;
             if (index === slots.length - 1) {
-              checkResult();
+              setTimeout(checkResult, 200); // Pausa para asegurar carga visual antes del popup
               spinning = false;
             }
           }
@@ -212,6 +247,7 @@
     function checkResult() {
       const result = slots.map(slot => slot.texture.key);
       if (result[0] === result[1] && result[1] === result[2]) {
+        document.getElementById('game').classList.add('win'); // Agregar resplandor al ganar
         const specialPrice = Phaser.Math.RND.pick([3, 4, 5]);
         const prizeMessage = `${result[0].replace('_', ' ')} a un precio especial de ${specialPrice}€`;
         showPopup(`¡Ganaste! ${prizeMessage}`, 5000, prizeMessage);
@@ -236,11 +272,8 @@
         prize: prize,
         to_email: email,
       })
-      .then(function(response) {
-        console.log("Correo enviado con éxito!", response.status, response.text);
-      }, function(error) {
-        console.log("Error al enviar el correo:", error);
-      });
+      .then(response => console.log("Correo enviado con éxito!", response.status, response.text))
+      .catch(error => console.log("Error al enviar el correo:", error));
     }
 
     function showPopup(message, duration, prize) {
