@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Máquina de Slots de Alcohol</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script> <!-- SDK actualizado de EmailJS -->
+  <style>
+    /* Fondo general y estilo */
+    body {
+      background: radial-gradient(circle, #333, #111);
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    #game {
+      margin: 20px auto;
+      width: 600px;
+      height: 400px;
+      position: relative;
+      border-radius: 10px;
+      box-shadow: 0px 0px 20px rgba(255, 215, 0, 0.7);
+      background-color: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #countdown {
+      font-size: 1.5em;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    /* Botón de Giro */
+    #spin_button {
+      width: 180px;
+      height: 50px;
+      background-color: #f0a500;
+      color: #222;
+      font-size: 1.5em;
+      font-weight: bold;
+      border-radius: 5px;
+      margin-top: 20px;
+      cursor: pointer;
+      box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+      transition: transform 0.1s ease;
+    }
+
+    #spin_button:hover {
+      transform: scale(1.05);
+    }
+
+    #spin_button:active {
+      transform: scale(0.95);
+    }
+
+    /* Popup para anuncios de premio */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      font-size: 1.2em;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .popup-content {
+      background: #222;
+      padding: 20px;
+      border: 2px solid #f0a500;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(255, 215, 0, 0.5);
+      animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h2>Máquina de Slots de Alcohol</h2>
+  <div id="game"></div>
+  <p id="countdown">Próximo giro automático en: 20:00</p>
+  <button id="spin_button">GIRAR</button>
+
+  <div class="popup" id="popup">
+    <div class="popup-content" id="popup-content">
+      <!-- Contenido del anuncio de premio se llenará dinámicamente -->
+    </div>
+  </div>
+
+  <script>
+    // Inicializar EmailJS con tu clave pública
+    emailjs.init("js5XmG0FCVqaqyfy_"); // Reemplaza con tu clave pública de EmailJS sin el objeto `{ publicKey: ... }`
+
+    // Configuración inicial de Phaser
+    const config = {
+      type: Phaser.AUTO,
+      width: 600,
+      height: 400,
+      parent: 'game',
+      backgroundColor: '#111',
+      scene: {
+        preload: preload,
+        create: create,
+        update: update
+      }
+    };
+
+    const game = new Phaser.Game(config);
+
+    let slots = [];
+    let symbols = ['ron_barcelo', 'puerto_indias', 'absolut_vodka'];
+    let spinning = false;
+    let countdownTime = 1200; // 20 minutos en segundos
+    let countdownText = document.getElementById('countdown');
+    const popup = document.getElementById('popup');
+    const popupContent = document.getElementById('popup-content');
+    const slotHeight = 200;
+
+    function preload() {
+      this.load.image('ron_barcelo', 'images/ron.jpg');
+      this.load.image('puerto_indias', 'images/puerto.jpeg');
+      this.load.image('absolut_vodka', 'images/absolut.jpeg');
+    }
+
+    function create() {
+      const slotXStart = 125;
+      const slotSpacing = 175;
+
+      for (let i = 0; i < 3; i++) {
+        const randomSymbol = Phaser.Math.RND.pick(symbols);
+        const slot = this.add.image(slotXStart + i * slotSpacing, 200, randomSymbol);
+        slot.displayHeight = slotHeight;
+        slot.scaleX = slot.scaleY;
+        slots.push(slot);
+      }
+
+      document.getElementById('spin_button').onclick = () => {
+        spinSlots.call(this);
+      };
+
+      this.time.addEvent({
+        delay: 1000,
+        callback: updateCountdown,
+        callbackScope: this,
+        loop: true
+      });
+    }
+
+    function spinSlots() {
+      if (spinning) return;
+      spinning = true;
+      countdownTime = 1200;
+
+      slots.forEach((slot, index) => {
+        this.tweens.add({
+          targets: slot,
+          y: slot.y + 600,
+          duration: 200,
+          repeat: 15,
+          delay: index * 150,
+          onRepeat: () => {
+            const randomSymbol = Phaser.Math.RND.pick(symbols);
+            slot.setTexture(randomSymbol);
+            slot.displayHeight = slotHeight;
+            slot.scaleX = slot.scaleY;
+          },
+          onComplete: () => {
+            const finalSymbol = Phaser.Math.RND.pick(symbols);
+            slot.setTexture(finalSymbol);
+            slot.displayHeight = slotHeight;
+            slot.scaleX = slot.scaleY;
+            slot.y -= 600;
+            if (index === slots.length - 1) {
+              checkResult();
+              spinning = false;
+            }
+          }
+        });
+      });
+    }
+
+    function checkResult() {
+      const result = slots.map(slot => slot.texture.key);
+      if (result[0] === result[1] && result[1] === result[2]) {
+        const specialPrice = Phaser.Math.RND.pick([3, 4, 5]);
+        const prizeMessage = `${result[0].replace('_', ' ')} a un precio especial de ${specialPrice}€`;
+        showPopup(`¡Ganaste! ${prizeMessage}`, 5000, prizeMessage);
+      } else {
+        showPopup("No has ganado esta vez. ¡Sigue intentando!", 5000);
+      }
+    }
+
+    function updateCountdown() {
+      if (countdownTime > 0) {
+        countdownTime--;
+        const minutes = Math.floor(countdownTime / 60);
+        const seconds = countdownTime % 60;
+        countdownText.innerText = `Próximo giro automático en: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      } else {
+        spinSlots.call(this);
+      }
+    }
+
+    // Función para enviar correo con EmailJS
+    function sendEmail(prize, email) {
+      emailjs.send("service_jlaxhkd", "template_lx9zm3r", {
+        prize: prize,
+        to_email: email,
+      })
+      .then(function(response) {
+        console.log("Correo enviado con éxito!", response.status, response.text);
+      }, function(error) {
+        console.log("Error al enviar el correo:", error);
+      });
+    }
+
+    function showPopup(message, duration, prize) {
+      popupContent.innerText = message;
+      popup.style.display = 'flex';
+
+      if (prize) {
+        const email = prompt('¡Has ganado! Ingresa tu correo para recibir el premio:');
+        if (email) {
+          sendEmail(prize, email);
+        }
+      }
+
+      setTimeout(() => {
+        popup.style.display = 'none';
+      }, duration);
+    }
+
+    function update() {}
+  </script>
+</body>
+</html>
