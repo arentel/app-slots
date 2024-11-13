@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Máquina de Slots de Alcohol</title>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script> <!-- SDK actualizado de EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <style>
     /* Fondo general y estilo */
     body {
@@ -15,12 +15,20 @@
       text-align: center;
       margin: 0;
       padding: 0;
+      overflow-x: hidden; /* Para evitar desplazamiento horizontal */
+    }
+
+    h2 {
+      font-size: 2em;
+      margin: 1em 0;
     }
 
     #game {
-      margin: 20px auto;
-      width: 600px;
-      height: 400px;
+      margin: 10px auto;
+      width: 90vw; /* Ajuste de ancho en porcentaje */
+      max-width: 600px; /* Ancho máximo para pantallas grandes */
+      height: 60vh; /* Ajuste de altura en porcentaje */
+      max-height: 400px; /* Altura máxima para pantallas grandes */
       position: relative;
       border-radius: 10px;
       box-shadow: 0px 0px 20px rgba(255, 215, 0, 0.7);
@@ -31,18 +39,20 @@
     }
 
     #countdown {
-      font-size: 1.5em;
+      font-size: 1.2em;
       margin-top: 10px;
       font-weight: bold;
     }
 
     /* Botón de Giro */
     #spin_button {
-      width: 180px;
-      height: 50px;
+      width: 50vw;
+      max-width: 180px;
+      height: 8vh;
+      max-height: 50px;
       background-color: #f0a500;
       color: #222;
-      font-size: 1.5em;
+      font-size: 1.2em;
       font-weight: bold;
       border-radius: 5px;
       margin-top: 20px;
@@ -82,6 +92,7 @@
       border: 2px solid #f0a500;
       border-radius: 10px;
       box-shadow: 0px 0px 10px rgba(255, 215, 0, 0.5);
+      max-width: 90vw; /* Limitar ancho de popup en móviles */
       animation: fadeIn 0.5s;
     }
 
@@ -104,14 +115,17 @@
   </div>
 
   <script>
-    // Inicializar EmailJS con tu clave pública
-    emailjs.init("js5XmG0FCVqaqyfy_"); // Reemplaza con tu clave pública de EmailJS sin el objeto `{ publicKey: ... }`
+    emailjs.init("js5XmG0FCVqaqyfy_"); // Inicializar EmailJS
 
-    // Configuración inicial de Phaser
+    // Configuración inicial de Phaser ajustada para la pantalla
     const config = {
       type: Phaser.AUTO,
-      width: 600,
-      height: 400,
+      width: '100%',
+      height: '100%',
+      scale: {
+        mode: Phaser.Scale.FIT, // Escalar para ajustarse a la pantalla
+        autoCenter: Phaser.Scale.CENTER_BOTH
+      },
       parent: 'game',
       backgroundColor: '#111',
       scene: {
@@ -130,7 +144,7 @@
     let countdownText = document.getElementById('countdown');
     const popup = document.getElementById('popup');
     const popupContent = document.getElementById('popup-content');
-    const slotHeight = 200;
+    const slotHeight = 150;
 
     function preload() {
       this.load.image('ron_barcelo', 'images/ron.jpg');
@@ -139,12 +153,12 @@
     }
 
     function create() {
-      const slotXStart = 125;
-      const slotSpacing = 175;
+      const slotXStart = this.scale.width / 5;
+      const slotSpacing = this.scale.width / 3.5;
 
       for (let i = 0; i < 3; i++) {
         const randomSymbol = Phaser.Math.RND.pick(symbols);
-        const slot = this.add.image(slotXStart + i * slotSpacing, 200, randomSymbol);
+        const slot = this.add.image(slotXStart + i * slotSpacing, this.scale.height / 2, randomSymbol);
         slot.displayHeight = slotHeight;
         slot.scaleX = slot.scaleY;
         slots.push(slot);
@@ -170,7 +184,7 @@
       slots.forEach((slot, index) => {
         this.tweens.add({
           targets: slot,
-          y: slot.y + 600,
+          y: slot.y + 400,
           duration: 200,
           repeat: 15,
           delay: index * 150,
@@ -185,7 +199,7 @@
             slot.setTexture(finalSymbol);
             slot.displayHeight = slotHeight;
             slot.scaleX = slot.scaleY;
-            slot.y -= 600;
+            slot.y -= 400;
             if (index === slots.length - 1) {
               checkResult();
               spinning = false;
@@ -217,7 +231,6 @@
       }
     }
 
-    // Función para enviar correo con EmailJS
     function sendEmail(prize, email) {
       emailjs.send("service_jlaxhkd", "template_lx9zm3r", {
         prize: prize,
