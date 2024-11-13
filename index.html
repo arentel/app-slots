@@ -25,10 +25,10 @@
 
     #game {
       margin: 10px auto;
-      width: 90vw; /* Ajuste de ancho en porcentaje */
-      max-width: 600px; /* Ancho máximo para pantallas grandes */
-      height: 60vh; /* Ajuste de altura en porcentaje */
-      max-height: 400px; /* Altura máxima para pantallas grandes */
+      width: 90vw;
+      max-width: 600px;
+      height: 60vh;
+      max-height: 400px;
       position: relative;
       border-radius: 10px;
       box-shadow: 0px 0px 20px rgba(255, 215, 0, 0.7);
@@ -92,7 +92,7 @@
       border: 2px solid #f0a500;
       border-radius: 10px;
       box-shadow: 0px 0px 10px rgba(255, 215, 0, 0.5);
-      max-width: 90vw; /* Limitar ancho de popup en móviles */
+      max-width: 90vw;
       animation: fadeIn 0.5s;
     }
 
@@ -140,16 +140,16 @@
     let slots = [];
     let symbols = ['ron_barcelo', 'puerto_indias', 'absolut_vodka'];
     let spinning = false;
-    let countdownTime = 1200; // 20 minutos en segundos
+    let countdownTime = 1200;
     let countdownText = document.getElementById('countdown');
     const popup = document.getElementById('popup');
     const popupContent = document.getElementById('popup-content');
-    const slotHeight = 150;
+    const slotHeight = 200; // Aumentado para hacer las imágenes más grandes
 
     function preload() {
-      this.load.image('ron_barcelo', 'images/ron.jpg');
-      this.load.image('puerto_indias', 'images/puerto.jpeg');
-      this.load.image('absolut_vodka', 'images/absolut.jpeg');
+      this.load.image('ron_barcelo', 'images/ron.png');
+      this.load.image('puerto_indias', 'images/puerto.png');
+      this.load.image('absolut_vodka', 'images/absolut.png');
     }
 
     function create() {
@@ -159,7 +159,7 @@
       for (let i = 0; i < 3; i++) {
         const randomSymbol = Phaser.Math.RND.pick(symbols);
         const slot = this.add.image(slotXStart + i * slotSpacing, this.scale.height / 2, randomSymbol);
-        slot.displayHeight = slotHeight;
+        slot.displayHeight = slotHeight; // Aplicar altura mayor para las imágenes
         slot.scaleX = slot.scaleY;
         slots.push(slot);
       }
